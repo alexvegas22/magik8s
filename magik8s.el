@@ -60,5 +60,29 @@
     "Prefix that is minimal and uses an anonymous command suffix."
     [("k" "Display overview" '(shell-command-to-string "kubectl get all") :transient t)])
 
+;; Main buffer
+(defvar magik8s-current-namespace "default"
+  "Current Kubernetes namespace.")
+
+(defun magik8s-display-overview ()
+  "Display the Kubernetes overview based on the current namespace."
+  (interactive)
+  (let* ((current-config-output (shell-command-to-string "kubectl config current-context"))
+         (pods-output (shell-command-to-string (format "kubectl get all -n %s" magik8s-current-namespace)))
+         (namespaces-output (shell-command-to-string "kubectl get namespaces"))
+         (config-output (shell-command-to-string "kubectl config get-contexts"))
+         (full-output (concat "Current Namespace: " magik8s-current-namespace "\n"
+                              "Current Config: " current-config-output "\n\n"
+                              "Pods and Services:\n" pods-output "\n\n"
+                              "Namespaces:\n" namespaces-output "\n\n"
+                              "Configs:\n" config-output)))
+    (with-current-buffer (get-buffer-create "*magik8s*")
+      (erase-buffer)  ;; Clear previous content
+      (insert full-output)
+      (goto-char (point-min)) ;; Move to the top of the buffer
+      (display-buffer (current-buffer)))))
+
+
+
 (provide magik8s)
 ;;; magik8s.el ends here
