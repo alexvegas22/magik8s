@@ -75,14 +75,40 @@
                               "Current Config: " current-config-output "\n\n"
                               "Pods and Services:\n" pods-output "\n\n"
                               "Namespaces:\n" namespaces-output "\n\n"
-                              "Configs:\n" config-output)))
+                              "Configs:\n" config-output
+                              "\n\nPress 'n' to change Namespace.")))
     (with-current-buffer (get-buffer-create "*magik8s*")
       (erase-buffer)  ;; Clear previous content
       (insert full-output)
-      (goto-char (point-min)) ;; Move to the top of the buffer
-      (display-buffer (current-buffer)))))
+      (goto-char (point-min))  ;; Move to the top of the buffer
+      (display-buffer (current-buffer))
+      ;; Set `n` as a command key to invoke namespace transient
+      (local-set-key (kbd "n") (lambda () (interactive) (transient-setup 'magik8s-namespace-prefix)))))
 
+(defun magik8s-set-namespace (namespace)
+  "Set the current namespace to NAMESPACE and refresh the overview."
+  (setq magik8s-current-namespace namespace)
+  (magik8s-display-overview)  ;; Refresh overview after changing namespace
+  (message "Namespace set to: %s" magik8s-current-namespace))
 
+(defun magik8s-generate-namespace-suffixes ()
+  "Generate suffixes for namespaces based on current Kubernetes namespaces."
+  (let* ((namespaces-output (shell-command-to-string "kubectl get namespaces -o custom-columns=:metadata.name"))
+         (namespaces (split-string namespaces-output "\n" t)))
+    (mapcar (lambda (ns)
+              `(,(format "Use Namespace: %s" ns)
+                (lambda ()
+                  (interactive)
+                  (magik8s-set-namespace ,ns))))
+            namespaces)))
 
-(provide magik8s)
+(transient-define-prefix magik8s-namespace-prefix ()
+  "Transient prefix for managing Kubernetes namespaces."
+  [["Namespaces"
+    ,@(magik8s-generate-namespace-suffixes)]])
+
+;; Bind C-x k to run the magik8s-display-overview function directly
+(global-set-key (kbd "C-x k") 'magik8s-display-overview)
+
+(provide 'magik8s)
 ;;; magik8s.el ends here
