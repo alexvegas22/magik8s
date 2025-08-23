@@ -14,51 +14,27 @@
 ;; Explain its purpose, how to use it, etc.
 
 ;;; Code:
-  (transient-define-prefix magik8s-descriptions ()
-    "Prefix with descriptions specified with slots."
-    ["Let's Give This Transient a Title\n" ; yes the newline works
-     ["Group One"
-      ("wo" "wave once" tsc-suffix-wave)
-      ("wa" "wave again" tsc-suffix-wave)]
 
-     ["Group Two"
-      ("ws" "wave some" tsc-suffix-wave)
-      ("wb" "wave better" tsc-suffix-wave)]]
-
-    ["Bad title" :description "Group of Groups"
-     ["Group Three"
-      ("k" "bad desc" tsc-suffix-wave :description "key-value wins")
-      ("n" tsc-suffix-wave :description "no desc necessary")]
-     [:description "Key Only Def"
-                   ("wt" "wave too much" tsc-suffix-wave)
-                   ("we" "wave excessively" tsc-suffix-wave)]])
-
-(defun magik8s-general-info ()
-  "Get an overview of the namespace ressources."
-  (shell-command-to-string "kubectl get all"))
-
-(transient-define-suffix magik8s-suffix-general-info (Magik8s)
-  "A suffix that uses `transient-setup' to manually load another transient."
-  (interactive)
-  ;; note that it's usually during the post-command side of calling the
-  ;; command that the actual work to set up the transient will occur.
-  ;; This is an implementation detail because it depends if we are calling
-  ;; `transient-setup' while already transient or not.
-  (transient-setup 'magik8s-general-info))
-
-
-(transient-define-prefix k8s-information ()
+;; Transient commands
+(transient-define-prefix magik8s (magik8s)
   "Prefix that displays some information."
-  ["Overview"
+  ["Magik8s"
    (:info "Kubectl get all")
    (:info #'magik8s-general-info)
    (:info "Use :format to remove whitespace" :format "%d")
-   ("k" magik8s-suffix-general-info)])
+   ("k" magik8s-suffix-general-info :description "kubectl get all")
+   ("n" magik8s-suffix-namespace :description "kubectl get namespaces" (magik8s-current-namespace))
+   ])
 
-;; Tests
-  (transient-define-prefix magik8s-hello ()
-    "Prefix that is minimal and uses an anonymous command suffix."
-    [("k" "Display overview" '(shell-command-to-string "kubectl get all") :transient t)])
+(transient-define-suffix magik8s-suffix-general-info (namespace)
+  "View general info"
+  (interactive)
+  (transient-setup (shell-command-to-string "kubectl get all -n default")))
+
+(transient-define-suffix magik8s-suffix-namespace ()
+  "Select Namespace"
+  (interactive)
+  (transient-setup (shell-command-to-string "kubectl get ns")))
 
 ;; Main buffer
 (defvar magik8s-current-namespace "default"
@@ -83,7 +59,7 @@
       (goto-char (point-min))  ;; Move to the top of the buffer
       (display-buffer (current-buffer))
       ;; Set `n` as a command key to invoke namespace transient
-      (local-set-key (kbd "n") (lambda () (interactive) (transient-setup 'magik8s-namespace-prefix)))))
+      (local-set-key (kbd "n") (lambda () (interactive) (transient-setup 'magik8s-namespace-prefix))))))
 
 (defun magik8s-set-namespace (namespace)
   "Set the current namespace to NAMESPACE and refresh the overview."
