@@ -1,0 +1,3 @@
+({{range .items}}
+(({{ .metadata.name }}) ("kubectl describe deployment {{.metadata.name}}"))
+{{end}})

@@ -108,7 +108,7 @@
     ,@(magik8s-generate-namespace-suffixes)]])
 
 ;; Bind C-x k to run the magik8s-display-overview function directly
-(global-set-key (kbd "C-x k") 'magik8s-display-overview)
+(global-set-key (kbd "C-c k") 'magik8s-display-overview)
 
 (provide 'magik8s)
 ;;; magik8s.el ends here
