@@ -15,6 +15,14 @@
 
 ;;; Code:
 
+;; kubectl commands
+
+(defun k8s-get-ns ()
+  (shell-command-to-string "kubectl get namespaces -ogo-template-file=./templates/namespace-template"))
+
+(defun k8s-get-deployments ()
+  (shell-command-to-string "kubectl get deployments -ogo-template-file=./templates/deployment-template"))
+
 ;; Transient commands
 (transient-define-prefix magik8s (magik8s)
   "Prefix that displays some information."
@@ -22,8 +30,9 @@
    (:info "Kubectl get all")
    (:info #'magik8s-general-info)
    (:info "Use :format to remove whitespace" :format "%d")
-   ("k" magik8s-suffix-general-info :description "kubectl get all")
-   ("n" magik8s-suffix-namespace :description "kubectl get namespaces" (magik8s-current-namespace))
+   ("k" magik8s-suffix-general-info :description "kubectl get all" (magik8s-current-namespace))
+   ("d" magik8s-suffix-deployment :description "kubectl get deployments")
+   ("n" magik8s-suffix-namespace :description "kubectl get namespaces")
    ])
 
 (transient-define-suffix magik8s-suffix-general-info (namespace)
@@ -31,10 +40,15 @@
   (interactive)
   (transient-setup (shell-command-to-string "kubectl get all -n default")))
 
+(transient-define-suffix magik8s-suffix-deployment ()
+  "Select Deployment"
+  (interactive)
+  (transient-setup (k8s-get-deployments)))
+
 (transient-define-suffix magik8s-suffix-namespace ()
   "Select Namespace"
   (interactive)
-  (transient-setup (shell-command-to-string "kubectl get ns")))
+  (transient-setup (k8s-get-ns)))
 
 ;; Main buffer
 (defvar magik8s-current-namespace "default"
