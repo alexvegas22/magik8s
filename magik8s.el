@@ -3,7 +3,6 @@
 ;; Author: Your Name <your.email@example.com>
 ;; Maintainer: Your Name <your.email@example.com>
 ;; Version: 0.1
-;; Package-Requires: ((emacs "27.1") (transient))
 ;; Homepage: https://github.com/ClubCedille/magik8s
 
 ;; This file is not part of GNU Emacs.
@@ -15,13 +14,8 @@
 
 ;;; Code:
 
-;; kubectl commands
-
-(defun k8s-get-ns ()
-  (shell-command-to-string "kubectl get namespaces -ogo-template-file=./templates/namespace-template"))
-
-(defun k8s-get-deployments ()
-  (shell-command-to-string "kubectl get deployments -ogo-template-file=./templates/deployment-template"))
+(require 'k8s-commands)
+(require 'transient)
 
 ;; Transient commands
 (transient-define-prefix magik8s (magik8s)
@@ -30,15 +24,15 @@
    (:info "Kubectl get all")
    (:info #'magik8s-general-info)
    (:info "Use :format to remove whitespace" :format "%d")
-   ("k" magik8s-suffix-general-info :description "kubectl get all" (magik8s-current-namespace))
+   ("k" magik8s-suffix-general-info :description "kubectl get all")
    ("d" magik8s-suffix-deployment :description "kubectl get deployments")
    ("n" magik8s-suffix-namespace :description "kubectl get namespaces")
    ])
 
-(transient-define-suffix magik8s-suffix-general-info (namespace)
+(transient-define-suffix magik8s-suffix-general-info ()
   "View general info"
   (interactive)
-  (transient-setup (shell-command-to-string "kubectl get all -n default")))
+  (transient-setup (k8s-get-all)))
 
 (transient-define-suffix magik8s-suffix-deployment ()
   "Select Deployment"
